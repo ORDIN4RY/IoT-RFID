@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartFactory | Production Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK (Compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <!-- TOP NAVIGATION -->
+    <nav class="topbar">
+        <div class="topbar-left">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 20h20M4 20V10l8-6 8 6v10M10 20v-6h4v6"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>SmartFactory</h1>
+                    <p>Production Monitoring System</p>
+                </div>
+            </div>
+        </div>
+        <div class="topbar-center">
+            <div class="stat-pill">
+                <span class="stat-label">Total Produk</span>
+                <span class="stat-value" id="total-count">0</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-label">In Progress</span>
+                <span class="stat-value accent-orange" id="inprogress-count">0</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-label">Rework</span>
+                <span class="stat-value accent-yellow" id="rework-count">0</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-label">Terkirim</span>
+                <span class="stat-value accent-green" id="done-count">0</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="live-badge">
+                <span class="live-dot"></span>
+                <span>LIVE</span>
+            </div>
+            <div class="clock" id="clock">--:--:--</div>
+        </div>
+    </nav>
+
+    <!-- PIPELINE HEADER -->
+    <div class="pipeline-wrapper">
+        <div class="pipeline">
+            <div class="pipeline-step" id="pipe-1">
+                <div class="pipe-num">01</div>
+                <div class="pipe-info">
+                    <span>Perakitan</span>
+                    <strong id="pipe-count-1">0 unit</strong>
+                </div>
+            </div>
+            <div class="pipe-arrow">
+                <svg viewBox="0 0 40 16" fill="none"><path d="M0 8 H34 M28 2 L36 8 L28 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="pipeline-step" id="pipe-2">
+                <div class="pipe-num">02</div>
+                <div class="pipe-info">
+                    <span>Pengecatan</span>
+                    <strong id="pipe-count-2">0 unit</strong>
+                </div>
+            </div>
+            <div class="pipe-arrow">
+                <svg viewBox="0 0 40 16" fill="none"><path d="M0 8 H34 M28 2 L36 8 L28 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="pipeline-step" id="pipe-3">
+                <div class="pipe-num">03</div>
+                <div class="pipe-info">
+                    <span>Packing</span>
+                    <strong id="pipe-count-3">0 unit</strong>
+                </div>
+            </div>
+            <div class="pipe-arrow">
+                <svg viewBox="0 0 40 16" fill="none"><path d="M0 8 H34 M28 2 L36 8 L28 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="pipeline-step" id="pipe-4">
+                <div class="pipe-num">04</div>
+                <div class="pipe-info">
+                    <span>Pengiriman</span>
+                    <strong id="pipe-count-4">0 unit</strong>
+                </div>
+            </div>
+            <!-- Rework badge terpisah -->
+            <div class="pipe-divider"></div>
+            <div class="pipeline-step rework-step" id="pipe-rework">
+                <div class="pipe-num">RW</div>
+                <div class="pipe-info">
+                    <span>Rework</span>
+                    <strong id="pipe-count-rework">0 unit</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KANBAN BOARD -->
+    <div class="board">
+
+        <!-- Station 1: Perakitan -->
+        <div class="column">
+            <div class="col-header">
+                <div class="col-label">
+                    <div class="col-dot orange"></div>
+                    <span>Perakitan</span>
+                </div>
+                <div class="col-count" id="count-1">0</div>
+            </div>
+            <div class="col-body" id="station-1-list">
+                <div class="empty-state"><p>Menunggu produk...</p></div>
+            </div>
+        </div>
+
+        <!-- Station 2: Pengecatan -->
+        <div class="column">
+            <div class="col-header">
+                <div class="col-label">
+                    <div class="col-dot yellow"></div>
+                    <span>Pengecatan</span>
+                </div>
+                <div class="col-count" id="count-2">0</div>
+            </div>
+            <div class="col-body" id="station-2-list">
+                <div class="empty-state"><p>Menunggu produk...</p></div>
+            </div>
+        </div>
+
+        <!-- Station 3: Packing -->
+        <div class="column">
+            <div class="col-header">
+                <div class="col-label">
+                    <div class="col-dot blue"></div>
+                    <span>Packing</span>
+                </div>
+                <div class="col-count" id="count-3">0</div>
+            </div>
+            <div class="col-body" id="station-3-list">
+                <div class="empty-state"><p>Menunggu produk...</p></div>
+            </div>
+        </div>
+
+        <!-- Station 4: Pengiriman -->
+        <div class="column">
+            <div class="col-header">
+                <div class="col-label">
+                    <div class="col-dot green"></div>
+                    <span>Pengiriman</span>
+                </div>
+                <div class="col-count" id="count-4">0</div>
+            </div>
+            <div class="col-body" id="station-4-list">
+                <div class="empty-state"><p>Belum ada produk siap kirim...</p></div>
+            </div>
+        </div>
+
+        <!-- Station REWORK -->
+        <div class="column col-rework">
+            <div class="col-header">
+                <div class="col-label">
+                    <div class="col-dot red"></div>
+                    <span>Rework / Perbaikan</span>
+                </div>
+                <div class="col-count" id="count-rework">0</div>
+            </div>
+            <div class="col-body" id="station-rework-list">
+                <div class="empty-state"><p>Tidak ada produk bermasalah</p></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div class="log-bar">
+        <div class="log-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Activity Log
+        </div>
+        <div class="log-list" id="log-list"></div>
+    </div>
+
+    <!-- MODAL: Registrasi Produk Baru -->
+    <div class="modal-overlay" id="reg-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-icon orange-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Kartu Baru Terdeteksi</h2>
+                    <p>Daftarkan produk sebelum memulai perakitan</p>
+                </div>
+            </div>
+            <div class="modal-rfid-display">
+                <span class="rfid-label">RFID TAG</span>
+                <span class="rfid-value" id="modal-rfid-text">—</span>
+            </div>
+            <div class="modal-form">
+                <label>Nama Seri Produk</label>
+                <input type="text" id="product-name-input" placeholder="Contoh: Mesin Motor Tipe X-200">
+            </div>
+            <div class="modal-footer">
+                <button id="btn-cancel" class="btn-cancel">Batalkan</button>
+                <button id="btn-save" class="btn-save">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+                    Simpan & Mulai Produksi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Aksi Rework -->
+    <div class="modal-overlay" id="rework-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-icon red-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4v5h.582M20 20v-5h-.581M5.077 9A8 8 0 0120 12M3.999 12a8 8 0 0014.923 3"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Kirim ke Rework</h2>
+                    <p id="rework-product-label">Produk akan dikembalikan ke stasiun perbaikan</p>
+                </div>
+            </div>
+            <div class="modal-rfid-display">
+                <span class="rfid-label">PRODUK</span>
+                <span class="rfid-value red-val" id="rework-rfid-text">—</span>
+            </div>
+            <div class="modal-form">
+                <label>Catatan Masalah / Alasan Rework</label>
+                <input type="text" id="rework-reason-input" placeholder="Contoh: Cat tidak merata, ada baret di sisi kanan">
+                <label style="margin-top:0.75rem">Kembalikan ke Stasiun</label>
+                <select id="rework-target-station">
+                    <option value="1">Stasiun 1 — Perakitan</option>
+                    <option value="2">Stasiun 2 — Pengecatan</option>
+                    <option value="3">Stasiun 3 — Packing</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-rework-cancel" class="btn-cancel">Batalkan</button>
+                <button id="btn-rework-save" class="btn-rework-save">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M4 4v5h.582M20 20v-5h-.581M5.077 9A8 8 0 0120 12M3.999 12a8 8 0 0014.923 3"/>
+                    </svg>
+                    Konfirmasi Rework
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
